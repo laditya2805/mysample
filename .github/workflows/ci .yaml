@@ -44,14 +44,17 @@ jobs:
       - name: Deploy to Dev S3
         if: github.ref == 'refs/heads/main'
         run: |
-          aws s3 cp index.html s3://dev-aditya-280595/index.html --acl public-read
+          aws s3 cp index.html s3://dev-aditya-280595/index.html
 
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')
         run: |
-          aws s3 cp index.html s3://prod-aditya-2805/index.html --acl public-read
+          aws s3 cp index.html s3://prod-aditya-2805/index.html
 
       - name: Deploy to UAT S3
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'uat'
         run: |
-          aws s3 cp index.html s3://uat-aditya-2805/index.html --acl public-read
+          aws s3 cp index.html s3://uat-aditya-2805/index.html
+
+      - name: Deploy succesfull
+        run: echo "Deployed Successfully"

@@ -8,6 +8,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - prod
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,3 +32,26 @@ jobs:
           name: static-site
           path: |
             index.html
+# Deploy to AWS S3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1 
+
+# Upload & deploy based on branch/environment
+      - name: Deploy to Dev S3
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws s3 cp index.html s3://dev-aditya-280595/index.html --acl public-read
+
+      - name: Deploy to Prod S3
+        if: startsWith(github.ref, 'refs/heads/release/')
+        run: |
+          aws s3 cp index.html s3://prod-aditya-2805/index.html --acl public-read
+
+      - name: Deploy to UAT S3
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'uat'
+        run: |
+          aws s3 cp index.html s3://uat-aditya-2805/index.html --acl public-read

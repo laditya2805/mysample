@@ -42,7 +42,7 @@ jobs:
 
 # Upload & deploy based on branch/environment
       - name: Deploy to Dev S3
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           aws s3 cp index.html s3://dev-aditya-280595/index.html
 

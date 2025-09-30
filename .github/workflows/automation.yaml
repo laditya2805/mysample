@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Automation Pipeline to test from another repo
 
 on: [push, pull_request, workflow_dispatch]
 
@@ -13,7 +13,7 @@ jobs:
       run: echo "MySample checkout is successful"
 
     - name: Clone MySampleUAT repo
-      run: git clone https://github.com/laditya2805/MySampleUAT.git > MySampleUAT
+      run: git clone https://github.com/laditya2805/MySampleUAT.git 
 
     - name: Checkout success of UAT repo
       run: echo "MySampleUAT checkout is successful"

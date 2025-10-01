@@ -1,6 +1,12 @@
 name: Automation Pipeline to test from another repo
 
-on: [push, pull_request, workflow_dispatch]
+on: 
+  push:
+   branches:
+      - main
+  pull_request:
+   branches:
+      - main
 
 jobs:
   automation:

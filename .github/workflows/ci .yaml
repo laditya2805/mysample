@@ -64,4 +64,4 @@ jobs:
           aws s3 cp index.html s3://uat-aditya-2805/index.html
 
       - name: Deploy succesfull
-        run: echo "Deployed Successfully"
+        run: echo "Deployed Successfully to bucket"

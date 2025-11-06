@@ -40,11 +40,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1 
 
+      - name: Get commit message
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
+
 # Upload & deploy based on branch/environment
       - name: Deploy to Dev S3
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          aws s3 cp index.html s3://dev-aditya-280595/index.html
+          aws s3 cp index.html s3://dev-aditya-280595/index.html/ \
+            --metadata "commit-message=${{ env.COMMIT_MSG }}"
+          echo "✅ Uploaded with commit message: ${{ env.COMMIT_MSG }}"
 
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')

@@ -46,13 +46,17 @@ jobs:
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
 
 # Upload & deploy based on branch/environment
-      - name: Deploy to Dev S3
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Upload exe to S3 with metadata
+        shell: pwsh
         run: |
-          aws s3 cp index.html s3://dev-aditya-280595/index.html/ \
-            --metadata "commit-message=${{ env.COMMIT_MSG }}"
-          echo "✅ Uploaded with commit message: ${{ env.COMMIT_MSG }}"
+          $files = Get-ChildItem "release" -Filter "*Setup*.exe"
+          foreach ($file in $files) {
+            aws s3 cp $file.FullName "s3://dev-aditya-280595/" `
+              --metadata commit-message="${{ env.COMMIT_MSG }}"
+            Write-Host "✅ Uploaded: $($file.Name)"
+          }
 
+          
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')
         run: |

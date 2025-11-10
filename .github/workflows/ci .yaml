@@ -50,7 +50,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         shell: pwsh
         run: |
-           $files = Get-ChildItem "release" -Filter "*Setup*.exe"
+           $files = Get-ChildItem "release/" -Filter "*Setup*.exe"
             foreach ($file in $files) {
               aws s3 cp $file.FullName "s3://dev-aditya-280595/" `
                  --metadata commit-message="${{ env.COMMIT_MSG }}"
@@ -58,7 +58,7 @@ jobs:
               
             }
 
-            
+
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')
         run: |

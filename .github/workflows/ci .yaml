@@ -19,19 +19,12 @@ on:
           - prod
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-        # Upload the HTML as artifact
-      - name: Upload static site artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: static-site
-          path: |
-            index.html
+
 # Deploy to AWS S3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

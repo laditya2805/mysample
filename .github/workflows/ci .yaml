@@ -17,6 +17,13 @@ on:
         options:
           - uat
           - prod
+
+
+permissions:
+  id-token: write      # Required for OIDC
+  contents: read 
+  
+
 jobs:
   build:
     runs-on: windows-latest

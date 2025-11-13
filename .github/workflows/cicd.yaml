@@ -1,0 +1,49 @@
+name: Test-RealExe-With-OIDC
+on:
+ workflow_dispatch:
+ 
+permissions:
+ id-token: write
+ contents: read
+ 
+jobs:
+ test-upload:
+   runs-on: windows-latest
+   steps:
+     - name: Checkout repo
+       uses: actions/checkout@v5
+     - name: Configure AWS OIDC
+       uses: aws-actions/configure-aws-credentials@v4
+       with:
+         role-to-assume: arn:aws:iam::<your-acct-id>:role/<your-oidc-role>
+         aws-region: ap-south-1
+         
+     - name: Download real release folder from S3
+       shell: pwsh
+       run: |
+         aws s3 sync s3://sample-lightening-280595/release ./release
+         Write-Host "Release folder downloaded."
+         
+     - name: Debug release folder
+       shell: pwsh
+       run: |
+         Write-Host "Files in release:"
+         Get-ChildItem "release" -Recurse
+         
+     - name: Test upload using PowerShell
+       shell: pwsh
+       run: |
+         $files = Get-ChildItem "release" -Filter "*Setup*.exe"
+         foreach ($file in $files) {
+           aws s3 cp $file.FullName "s3://dev-aditya-280595/" `
+             --metadata commit-message="test-pwsh"
+           Write-Host "PWSh uploaded: $($file.Name)"
+         }
+         
+     - name: Test upload using Bash (expected failure)
+       shell: bash
+       run: |
+         shopt -s nullglob
+         for file in release/*Setup*.exe; do
+           aws s3 cp "$file" s3://dev-aditya-280595/ --metadata commit-message="test-bash"
+         done

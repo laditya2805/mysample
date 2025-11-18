@@ -56,21 +56,19 @@ jobs:
             --output text)
           
           echo "Tagging: $LATEST_FILE"
+          echo "Commit: $COMMIT_MSG"
+          
+          TAGGING=$(jq -n \
+            --arg key "commit-message" \
+            --arg value "$COMMIT_MSG" \
+            '{TagSet: [{Key: $key, Value: $value}]}')
           
           aws s3api put-object-tagging \
             --bucket dev-aditya-280595 \
             --key "$LATEST_FILE" \
-            --tagging '{"TagSet":[{"Key":"commit-message","Value":"'"$COMMIT_MSG"'"}]}'
+            --tagging "$TAGGING"
           
-          echo "Tagged successfully"
-
-      - name: Deploy to Prod S3
-        if: startsWith(github.ref, 'refs/heads/release/')
-        run: aws s3 cp index.html s3://prod-aditya-2805/index.html
-
-      - name: Deploy to UAT S3
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'uat'
-        run: aws s3 cp index.html s3://uat-aditya-2805/index.html
+          echo "Tagged successfully with: $COMMIT_MSG"
 
       - name: Deploy successful
         run: echo "Deployed Successfully"

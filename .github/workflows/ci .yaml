@@ -53,10 +53,14 @@ jobs:
       - name: Tag latest uploaded file
         shell: bash
         run: |
-               aws s3api put-object-tagging \
-               --bucket dev-aditya-280595 \
-               --key "$(aws s3api list-objects-v2 --bucket dev-aditya-280595 --query 'sort_by(Contents, &LastModified)[-1].Key' --output text)" \
-               --tagging "TagSet=[{Key=commit-message,Value=\"${{ env.COMMIT_MSG }}\"}]"
+             LATEST_FILE=$(aws s3api list-objects-v2 \
+             --bucket dev-aditya-280595 \
+             --query 'sort_by(Contents, &LastModified)[-1].Key' \
+             --output text)
+             aws s3api put-object-tagging \
+             --bucket dev-aditya-280595 \
+             --key "$LATEST_FILE" \
+             --tagging 'TagSet=[{Key=commit-message,Value='"\"$COMMIT_MSG\""'}]'
 
 
 

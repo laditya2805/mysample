@@ -48,13 +48,16 @@ jobs:
 # Upload & deploy based on branch/environment
       - name: Deploy to Dev S3
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: aws s3 cp release/ s3://emerald-on-prem-dev/ --recursive --exclude "*" --include "*.exe" --exclude "win-unpacked/*"
+
+      - name: Tag latest uploaded file
         shell: bash
         run: |
-               shopt -s nullglob
-               for file in release/*Setup*.exe.txt; do
-                aws s3 cp "$file" s3://dev-aditya-280595/ \
-                 --metadata "commit-message=${{ env.COMMIT_MSG }}"
-                done
+               aws s3api put-object-tagging \
+               --bucket dev-aditya-280595 \
+               --key "$(aws s3api list-objects-v2 --bucket emerald-on-prem-dev --query 'sort_by(Contents, &LastModified)[-1].Key' --output text)" \
+               --tagging "TagSet=[{Key=commit-message,Value=${{ env.COMMIT_MSG }}}]"
+
 
 
 

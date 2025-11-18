@@ -38,7 +38,7 @@ jobs:
       - name: Get commit message
         shell: bash
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s" | sed 's/[^a-zA-Z0-9 ._:\/=+@-]//g')
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
           echo "Commit: $COMMIT_MSG"
 
@@ -46,28 +46,24 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: aws s3 cp release/ s3://dev-aditya-280595/ --recursive --exclude "*" --include "*.exe.txt" --exclude "win-unpacked/*"
 
-      - name: Tag latest uploaded file (with debug)
+      - name: Tag latest uploaded file
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        shell: pwsh
+        shell: bash
         run: |
-          $latestFile = aws s3api list-objects-v2 --bucket dev-aditya-280595 --query 'sort_by(Contents, &LastModified)[-1].Key' --output text
+          LATEST_FILE=$(aws s3api list-objects-v2 \
+            --bucket dev-aditya-280595 \
+            --query 'sort_by(Contents, &LastModified)[-1].Key' \
+            --output text)
           
-          Write-Host "========== DEBUG =========="
-          Write-Host "Latest file: $latestFile"
-          Write-Host "Commit message: $env:COMMIT_MSG"
-          Write-Host "Commit message length: $($env:COMMIT_MSG.Length)"
+          echo "Tagging: $LATEST_FILE"
+          echo "Commit: $COMMIT_MSG"
           
-          # Show each character
-          Write-Host "Characters in commit message:"
-          $env:COMMIT_MSG.ToCharArray() | ForEach-Object { Write-Host "$_ (code: $([int][char]$_))" }
+          aws s3api put-object-tagging \
+            --bucket dev-aditya-280595 \
+            --key "$LATEST_FILE" \
+            --tagging "{\"TagSet\":[{\"Key\":\"commit-message\",\"Value\":\"$COMMIT_MSG\"}]}"
           
-          $tagging = @{TagSet=@(@{Key="commit-message";Value=$env:COMMIT_MSG})} | ConvertTo-Json -Compress -Depth 3
-          
-          Write-Host "JSON being sent:"
-          Write-Host $tagging
-          
-          Write-Host "Attempting to tag..."
-          aws s3api put-object-tagging --bucket dev-aditya-280595 --key $latestFile --tagging $tagging
+          echo "Tagged successfully"
 
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')

@@ -4,19 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'uat'
-        type: choice
-        options:
-          - uat
-          - prod
 
 permissions:
   id-token: write
@@ -40,7 +27,6 @@ jobs:
         run: |
           COMMIT_MSG=$(git log -1 --pretty=format:"%s")
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
-          echo "Commit: $COMMIT_MSG"
 
       - name: Deploy to Dev S3
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -48,27 +34,8 @@ jobs:
 
       - name: Tag latest uploaded file
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        shell: bash
+        shell: pwsh
         run: |
-          LATEST_FILE=$(aws s3api list-objects-v2 \
-            --bucket dev-aditya-280595 \
-            --query 'sort_by(Contents, &LastModified)[-1].Key' \
-            --output text)
-          
-          echo "Tagging: $LATEST_FILE"
-          echo "Commit: $COMMIT_MSG"
-          
-          TAGGING=$(jq -n \
-            --arg key "commit-message" \
-            --arg value "$COMMIT_MSG" \
-            '{TagSet: [{Key: $key, Value: $value}]}')
-          
-          aws s3api put-object-tagging \
-            --bucket dev-aditya-280595 \
-            --key "$LATEST_FILE" \
-            --tagging "$TAGGING"
-          
-          echo "Tagged successfully with: $COMMIT_MSG"
-
-      - name: Deploy successful
-        run: echo "Deployed Successfully"
+          $latestFile = aws s3api list-objects-v2 --bucket dev-aditya-280595 --query 'sort_by(Contents, &LastModified)[-1].Key' --output text
+          $tagging = @{TagSet=@(@{Key="commit-message";Value=$env:COMMIT_MSG})} | ConvertTo-Json -Compress -Depth 3
+          aws s3api put-object-tagging --bucket dev-aditya-280595 --key $latestFile --tagging $tagging

@@ -50,20 +50,10 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         shell: bash
         run: |
-          LATEST_FILE=$(aws s3api list-objects-v2 \
-            --bucket dev-aditya-280595 \
-            --query 'sort_by(Contents, &LastModified)[-1].Key' \
-            --output text)
-          
-          echo "Tagging: $LATEST_FILE"
-          echo "Commit: $COMMIT_MSG"
-          
           aws s3api put-object-tagging \
             --bucket dev-aditya-280595 \
-            --key "$LATEST_FILE" \
+            --key "$(aws s3api list-objects-v2 --bucket dev-aditya-280595 --query 'sort_by(Contents, &LastModified)[-1].Key' --output text)" \
             --tagging "{\"TagSet\":[{\"Key\":\"commit-message\",\"Value\":\"$COMMIT_MSG\"}]}"
-          
-          echo "Tagged successfully"
 
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')

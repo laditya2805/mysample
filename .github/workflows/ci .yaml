@@ -1,4 +1,4 @@
-name : CI pipeline
+name: CI pipeline
 
 on:
   push:
@@ -18,11 +18,9 @@ on:
           - uat
           - prod
 
-
 permissions:
-  id-token: write      # Required for OIDC
+  id-token: write
   contents: read 
-  
 
 jobs:
   build:
@@ -31,8 +29,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-
-# Deploy to AWS S3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -44,36 +40,37 @@ jobs:
         run: |
           COMMIT_MSG=$(git log -1 --pretty=format:"%s")
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
+          echo "Commit: $COMMIT_MSG"
 
-# Upload & deploy based on branch/environment
       - name: Deploy to Dev S3
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: aws s3 cp release/ s3://dev-aditya-280595/ --recursive --exclude "*" --include "*.exe.txt" --exclude "win-unpacked/*"
 
       - name: Tag latest uploaded file
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         shell: bash
         run: |
-             LATEST_FILE=$(aws s3api list-objects-v2 \
-             --bucket dev-aditya-280595 \
-             --query 'sort_by(Contents, &LastModified)[-1].Key' \
-             --output text)
-             aws s3api put-object-tagging \
-             --bucket dev-aditya-280595 \
-             --key "$LATEST_FILE" \
-             --tagging 'TagSet=[{Key=commit-message,Value='"\"$COMMIT_MSG\""'}]'
-
-
-
+          LATEST_FILE=$(aws s3api list-objects-v2 \
+            --bucket dev-aditya-280595 \
+            --query 'sort_by(Contents, &LastModified)[-1].Key' \
+            --output text)
+          
+          echo "Tagging: $LATEST_FILE"
+          
+          aws s3api put-object-tagging \
+            --bucket dev-aditya-280595 \
+            --key "$LATEST_FILE" \
+            --tagging '{"TagSet":[{"Key":"commit-message","Value":"'"$COMMIT_MSG"'"}]}'
+          
+          echo "Tagged successfully"
 
       - name: Deploy to Prod S3
         if: startsWith(github.ref, 'refs/heads/release/')
-        run: |
-          aws s3 cp index.html s3://prod-aditya-2805/index.html
+        run: aws s3 cp index.html s3://prod-aditya-2805/index.html
 
       - name: Deploy to UAT S3
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'uat'
-        run: |
-          aws s3 cp index.html s3://uat-aditya-2805/index.html
+        run: aws s3 cp index.html s3://uat-aditya-2805/index.html
 
-      - name: Deploy succesfull
-        run: echo "Deployed Successfull"
+      - name: Deploy successful
+        run: echo "Deployed Successfully"

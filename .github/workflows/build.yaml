@@ -19,5 +19,7 @@ jobs:
           sleep 2
           echo "Build complete"
 
-      - name: Trigger automation Tests sample
-        uses: laditya2805/MySampleUAT/.github/workflows/run-tests.yaml@main
+
+  trigger-tests:
+    needs: build
+    uses: laditya2805/MySampleUAT/.github/workflows/run-tests.yaml@main

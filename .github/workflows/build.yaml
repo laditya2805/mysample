@@ -26,5 +26,5 @@ jobs:
 
   trigger-tests:
     needs: build
-    uses: laditya2805/MySampleUAT/.github/workflows/run-tests.yaml@main
+    uses: laditya2805/MySampleUAT/.github/workflows/run-tests.yml@main
     with: {}
